@@ -22,6 +22,19 @@ function initializeApp() {
     addUnitChangeListeners();
 }
 
+function toggleHelp() {
+    const helpSection = document.getElementById('helpSection');
+    const helpToggleText = document.getElementById('helpToggleText');
+    
+    if (helpSection.style.display === 'none') {
+        helpSection.style.display = 'block';
+        helpToggleText.textContent = 'Hide Help & Examples';
+    } else {
+        helpSection.style.display = 'none';
+        helpToggleText.textContent = 'Show Help & Examples';
+    }
+}
+
 function addUnitChangeListeners() {
     // Sheet configuration unit changes
     ['sheetWidth', 'sheetHeight', 'outerGutter', 'apertureGutter'].forEach(id => {
@@ -226,7 +239,7 @@ function calculateYield() {
     }
     
     // First, check for aperture nesting opportunities
-    const nestingAnalysis = analyzeApertureNesting(mounts);
+    const nestingAnalysis = analyzeApertureNesting(mounts, sheet.apertureGutter);
     
     // Calculate yield for each mount including mixed orientations and nesting
     const results = mounts.map(mount => {
@@ -581,7 +594,7 @@ function tryReverseColumnMixedStrategy(mount, availableWidth, availableHeight, n
     return bestCombination;
 }
 
-function analyzeApertureNesting(mounts) {
+function analyzeApertureNesting(mounts, apertureGutter) {
     const nestingOpportunities = [];
     
     // Check each mount to see if it can fit inside another mount's apertures
@@ -597,29 +610,33 @@ function analyzeApertureNesting(mounts) {
             for (let k = 0; k < largerMount.apertures.length; k++) {
                 const aperture = largerMount.apertures[k];
                 
-                // Check if smaller mount fits in normal orientation
-                const fitsNormal = (smallerMount.outerWidth <= aperture.width && 
-                                  smallerMount.outerHeight <= aperture.height);
+                // Account for aperture gutter - reduce available space by gutter on all sides
+                const availableWidth = aperture.width - (2 * apertureGutter);
+                const availableHeight = aperture.height - (2 * apertureGutter);
                 
-                // Check if smaller mount fits in rotated orientation
-                const fitsRotated = (smallerMount.outerHeight <= aperture.width && 
-                                   smallerMount.outerWidth <= aperture.height);
+                // Check if smaller mount fits in normal orientation (with gutter)
+                const fitsNormal = (smallerMount.outerWidth <= availableWidth && 
+                                  smallerMount.outerHeight <= availableHeight);
+                
+                // Check if smaller mount fits in rotated orientation (with gutter)
+                const fitsRotated = (smallerMount.outerHeight <= availableWidth && 
+                                   smallerMount.outerWidth <= availableHeight);
                 
                 if (fitsNormal || fitsRotated) {
-                    // Calculate how many smaller mounts can fit per aperture
+                    // Calculate how many smaller mounts can fit per aperture (accounting for gutter)
                     let mountsPerAperture = 0;
                     let bestOrientation = 'normal';
                     
                     if (fitsNormal) {
-                        const across = Math.floor(aperture.width / smallerMount.outerWidth);
-                        const down = Math.floor(aperture.height / smallerMount.outerHeight);
+                        const across = Math.floor(availableWidth / smallerMount.outerWidth);
+                        const down = Math.floor(availableHeight / smallerMount.outerHeight);
                         mountsPerAperture = across * down;
                         bestOrientation = 'normal';
                     }
                     
                     if (fitsRotated) {
-                        const across = Math.floor(aperture.width / smallerMount.outerHeight);
-                        const down = Math.floor(aperture.height / smallerMount.outerWidth);
+                        const across = Math.floor(availableWidth / smallerMount.outerHeight);
+                        const down = Math.floor(availableHeight / smallerMount.outerWidth);
                         const rotatedCount = across * down;
                         if (rotatedCount > mountsPerAperture) {
                             mountsPerAperture = rotatedCount;
@@ -632,9 +649,12 @@ function analyzeApertureNesting(mounts) {
                         nestedMount: smallerMount,
                         apertureIndex: k,
                         aperture: aperture,
+                        availableWidth: availableWidth,
+                        availableHeight: availableHeight,
                         mountsPerAperture: mountsPerAperture,
                         orientation: bestOrientation,
-                        totalNestingCapacity: mountsPerAperture * largerMount.quantity
+                        totalNestingCapacity: mountsPerAperture * largerMount.quantity,
+                        apertureGutter: apertureGutter
                     });
                 }
             }
@@ -1217,27 +1237,34 @@ function drawMount(canvas, x, y, width, height, color, mount, isRotated, scale, 
             
             // Draw nested mounts inside aperture if present  
             if (nestingInfo && finalApertureWidth > 15 && finalApertureHeight > 15) {
-                // Calculate how many nested mounts fit in this aperture
+                // Calculate how many nested mounts fit in this aperture (accounting for aperture gutter)
                 const nestedMountWidthMm = nestingInfo.orientation === 'rotated' ? 
                     nestingInfo.nestedMount.outerHeight : nestingInfo.nestedMount.outerWidth;
                 const nestedMountHeightMm = nestingInfo.orientation === 'rotated' ? 
                     nestingInfo.nestedMount.outerWidth : nestingInfo.nestedMount.outerHeight;
                 
-                const nestedMountsAcross = Math.floor(apertureWidthMm / nestedMountWidthMm);
-                const nestedMountsDown = Math.floor(apertureHeightMm / nestedMountHeightMm);
+                // Use the available space after gutter from nesting analysis
+                const availableWidthMm = nestingInfo.availableWidth;
+                const availableHeightMm = nestingInfo.availableHeight;
+                
+                const nestedMountsAcross = Math.floor(availableWidthMm / nestedMountWidthMm);
+                const nestedMountsDown = Math.floor(availableHeightMm / nestedMountHeightMm);
                 
                 const nestedMountWidth = nestedMountWidthMm * scale;
                 const nestedMountHeight = nestedMountHeightMm * scale;
                 
-                // Draw each nested mount with perfect centering
+                // Draw each nested mount with perfect centering (accounting for aperture gutter)
                 const maxNesToShow = Math.min(nestedMountsAcross * nestedMountsDown, 4); // Limit for visual clarity
                 let nestsDrawn = 0;
                 
-                // Calculate total grid size and center it within aperture
+                // Calculate total grid size and center it within available space (after gutter)
                 const totalGridWidth = nestedMountsAcross * nestedMountWidth;
                 const totalGridHeight = nestedMountsDown * nestedMountHeight;
-                const gridOffsetX = (finalApertureWidth - totalGridWidth) / 2;
-                const gridOffsetY = (finalApertureHeight - totalGridHeight) / 2;
+                const gutterOffset = nestingInfo.apertureGutter * scale;
+                const availableDisplayWidth = finalApertureWidth - (2 * gutterOffset);
+                const availableDisplayHeight = finalApertureHeight - (2 * gutterOffset);
+                const gridOffsetX = gutterOffset + (availableDisplayWidth - totalGridWidth) / 2;
+                const gridOffsetY = gutterOffset + (availableDisplayHeight - totalGridHeight) / 2;
                 
                 for (let row = 0; row < nestedMountsDown && nestsDrawn < maxNesToShow; row++) {
                     for (let col = 0; col < nestedMountsAcross && nestsDrawn < maxNesToShow; col++) {
@@ -1455,10 +1482,18 @@ function displayBreakdown(results) {
                 border-left: 3px solid #48bb78;
             `;
             const nestedCount = Math.min(result.nestingInfo.nestedMount.quantity, result.nestingInfo.totalNestingCapacity);
+            const aperture = result.nestingInfo.aperture;
+            const availableSpace = `${result.nestingInfo.availableWidth.toFixed(1)}×${result.nestingInfo.availableHeight.toFixed(1)}mm`;
+            const gutterUsed = result.nestingInfo.apertureGutter;
+            
             nestingInfo.innerHTML = `
                 <strong>🔸 NESTED MOUNT:</strong> This mount (${result.mount.outerWidth.toFixed(1)}×${result.mount.outerHeight.toFixed(1)}mm) 
                 can be cut from Mount #${result.nestingInfo.parentMount.id}'s aperture waste material<br>
-                <em>Up to ${nestedCount} pieces can be nested per sheet</em>
+                <div style="margin-top: 4px; font-size: 0.9em; color: #2d5016;">
+                    <strong>Aperture Details:</strong> ${aperture.width.toFixed(1)}×${aperture.height.toFixed(1)}mm aperture 
+                    → ${availableSpace} usable space (after ${gutterUsed.toFixed(1)}mm gutter)
+                </div>
+                <em>Up to ${nestedCount} pieces can be nested per sheet (${result.nestingInfo.orientation} orientation)</em>
             `;
             breakdownItem.appendChild(nestingInfo);
         }

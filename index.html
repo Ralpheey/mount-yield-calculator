@@ -14,6 +14,48 @@
             <p>Calculate optimal cutting layouts for picture frame mounts</p>
         </header>
 
+        <!-- Help Section -->
+        <div class="help-section" id="helpSection" style="display: none;">
+            <h3>📖 Understanding Gutters & Nesting</h3>
+            
+            <div class="help-item">
+                <h4>🛡️ Outer Gutter (Safety Margin)</h4>
+                <p>The outer gutter is a safety margin around the entire sheet edge that ensures mounts don't get cut off during sheet trimming operations and provides space for handling.</p>
+                <div class="example">
+                    <strong>Example:</strong> With a 5mm outer gutter on a 1000×800mm sheet, the usable cutting area becomes 990×790mm (1000-10mm × 800-10mm).
+                </div>
+                <p><strong>Typical Values:</strong> 5-10mm for most cutting operations, 10-15mm for less precise cutting methods.</p>
+            </div>
+
+            <div class="help-item">
+                <h4>🔧 Aperture Gutter (Nesting Margin)</h4>
+                <p>The aperture gutter is the minimum spacing around apertures when nesting smaller mounts inside larger mounts' aperture waste material. This ensures there's enough material between edges for clean cutting.</p>
+                <div class="example">
+                    <strong>Nesting Example:</strong> A 200×150mm mount has a 120×80mm aperture. With a 3mm aperture gutter, a smaller mount up to 114×74mm (120-6mm × 80-6mm) can be nested inside the aperture waste.
+                </div>
+                <p><strong>Typical Values:</strong> 2-5mm depending on cutting precision. Laser cutting can use 2mm, while manual cutting may need 5mm.</p>
+            </div>
+
+            <div class="help-item">
+                <h4>🎯 How Nesting Works</h4>
+                <p>The system automatically detects when smaller mounts can be cut from larger mounts' aperture waste:</p>
+                <ul style="margin: 8px 0; padding-left: 20px; color: #4a5568;">
+                    <li>Compares each mount's dimensions against all other mounts' aperture sizes</li>
+                    <li>Accounts for aperture gutter spacing requirements</li>
+                    <li>Considers both normal and rotated orientations for optimal fit</li>
+                    <li>Calculates maximum nesting capacity per aperture</li>
+                    <li>Reduces total sheet requirements by utilizing waste material</li>
+                </ul>
+                <div class="example">
+                    <strong>Smart Optimization:</strong> If Mount A's aperture can fit 3 pieces of Mount B, the system will nest those pieces and only calculate separate sheets for the remaining Mount B quantity.
+                </div>
+            </div>
+        </div>
+
+        <button class="help-toggle" onclick="toggleHelp()">
+            <span id="helpToggleText">Show Help & Examples</span>
+        </button>
+
         <div class="calculator-grid">
             <!-- Sheet Configuration -->
             <div class="card">
@@ -43,12 +85,15 @@
                 <div class="form-group">
                     <label for="outerGutter">Outer Gutter:</label>
                     <div class="input-group">
-                        <input type="number" id="outerGutter" step="0.1" min="0" value="5" required>edge 
+                        <input type="number" id="outerGutter" step="0.1" min="0" value="5" required>
                         <select id="outerGutterUnit">
                             <option value="mm">mm</option>
                             <option value="cm">cm</option>
                             <option value="in">inches</option>
                         </select>
+                    </div>
+                    <div class="help-text">
+                        <strong>Outer Gutter:</strong> Safety margin around the entire sheet edge. This ensures mounts don't get cut off during sheet trimming and provides space for handling. Typically 5-10mm for most cutting operations.
                     </div>
                 </div>
                 <div class="form-group">
@@ -60,6 +105,9 @@
                             <option value="cm">cm</option>
                             <option value="in">inches</option>
                         </select>
+                    </div>
+                    <div class="help-text">
+                        <strong>Aperture Gutter:</strong> Minimum spacing around apertures for nesting smaller mounts. When the system detects that a smaller mount can be cut from a larger mount's aperture waste, this gutter ensures there's enough material between the aperture edge and nested mount for clean cutting. Typically 2-5mm depending on cutting precision.
                     </div>
                 </div>
                 <div class="form-group">

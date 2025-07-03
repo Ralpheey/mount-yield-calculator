@@ -449,4 +449,81 @@ header p {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Help text styling */
+.help-text {
+    font-size: 0.85em;
+    color: #4a5568;
+    margin-top: 5px;
+    padding: 8px;
+    background: #f7fafc;
+    border-left: 3px solid #667eea;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+
+.help-text strong {
+    color: #2d3748;
+}
+
+/* Help section styling */
+.help-section {
+    background: #e6f3ff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #bee3f8;
+}
+
+.help-section h3 {
+    color: #2d3748;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.help-section .help-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
+}
+
+.help-section .help-item h4 {
+    color: #2d3748;
+    margin: 0 0 8px 0;
+    font-size: 1em;
+}
+
+.help-section .help-item p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.help-section .help-item .example {
+    margin-top: 8px;
+    padding: 6px;
+    background: #f0f8ff;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: #2d5016;
+}
+
+.help-toggle {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.help-toggle:hover {
+    background: #5a67d8;
 } 
