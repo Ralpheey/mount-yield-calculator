@@ -1,6 +1,5 @@
 // Global variables
 let mountCounter = 1;
-let apertureCounter = {};
 
 // Unit conversion factors (to mm)
 const UNIT_CONVERSIONS = {
@@ -15,9 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    // Initialize aperture counter for first mount
-    apertureCounter[1] = 1;
-    
     // Add event listeners
     document.getElementById('addMountBtn').addEventListener('click', addMount);
     document.getElementById('calculateBtn').addEventListener('click', calculateYield);
@@ -60,7 +56,6 @@ function addMount() {
     }
     
     mountCounter++;
-    apertureCounter[mountCounter] = 1;
     
     const mountHtml = `
         <div class="mount-item" data-mount-id="${mountCounter}">
@@ -94,34 +89,25 @@ function addMount() {
                 <input type="number" class="quantity" min="1" value="1" required>
             </div>
             <div class="apertures-section">
-                <label>Apertures:</label>
-                <div class="apertures-container">
-                    <div class="aperture-item" data-aperture-id="1">
-                        <div class="aperture-header">
-                            <span>Aperture #1</span>
-                            <button type="button" class="remove-aperture" onclick="removeAperture(${mountCounter}, 1)">×</button>
-                        </div>
-                        <div class="size-inputs">
-                            <div class="input-group">
-                                <input type="number" class="apertureWidth" step="0.1" min="0" placeholder="Width">
-                                <select class="apertureWidthUnit">
-                                    <option value="mm">mm</option>
-                                    <option value="cm">cm</option>
-                                    <option value="in">inches</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <input type="number" class="apertureHeight" step="0.1" min="0" placeholder="Height">
-                                <select class="apertureHeightUnit">
-                                    <option value="mm">mm</option>
-                                    <option value="cm">cm</option>
-                                    <option value="in">inches</option>
-                                </select>
-                            </div>
-                        </div>
+                <label>Aperture (optional):</label>
+                <div class="size-inputs">
+                    <div class="input-group">
+                        <input type="number" class="apertureWidth" step="0.1" min="0" placeholder="Width">
+                        <select class="apertureWidthUnit">
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" class="apertureHeight" step="0.1" min="0" placeholder="Height">
+                        <select class="apertureHeightUnit">
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inches</option>
+                        </select>
                     </div>
                 </div>
-                <button type="button" class="add-aperture-btn" onclick="addAperture(${mountCounter})">+ Add Aperture</button>
             </div>
         </div>
     `;
@@ -134,7 +120,6 @@ function removeMount(mountId) {
     const mountElement = document.querySelector(`[data-mount-id="${mountId}"]`);
     if (mountElement) {
         mountElement.remove();
-        delete apertureCounter[mountId];
         updateMountNumbers();
     }
 }
@@ -149,90 +134,10 @@ function updateMountNumbers() {
         // Update remove button onclick
         const removeBtn = item.querySelector('.remove-mount');
         removeBtn.onclick = () => removeMount(newId);
-        
-        // Update aperture buttons
-        const apertureBtns = item.querySelectorAll('.add-aperture-btn');
-        apertureBtns.forEach(btn => {
-            btn.onclick = () => addAperture(newId);
-        });
-        
-        // Update aperture remove buttons
-        const apertureItems = item.querySelectorAll('.aperture-item');
-        apertureItems.forEach((aperture, apertureIndex) => {
-            const apertureId = apertureIndex + 1;
-            aperture.setAttribute('data-aperture-id', apertureId);
-            aperture.querySelector('span').textContent = `Aperture #${apertureId}`;
-            
-            const removeApertureBtn = aperture.querySelector('.remove-aperture');
-            removeApertureBtn.onclick = () => removeAperture(newId, apertureId);
-        });
     });
 }
 
-function addAperture(mountId) {
-    const mountElement = document.querySelector(`[data-mount-id="${mountId}"]`);
-    const aperturesContainer = mountElement.querySelector('.apertures-container');
-    const apertureCount = aperturesContainer.children.length;
-    
-    if (apertureCount >= 9) {
-        alert('Maximum of 9 apertures per mount allowed');
-        return;
-    }
-    
-    if (!apertureCounter[mountId]) {
-        apertureCounter[mountId] = 0;
-    }
-    apertureCounter[mountId]++;
-    
-    const apertureHtml = `
-        <div class="aperture-item" data-aperture-id="${apertureCounter[mountId]}">
-            <div class="aperture-header">
-                <span>Aperture #${apertureCounter[mountId]}</span>
-                <button type="button" class="remove-aperture" onclick="removeAperture(${mountId}, ${apertureCounter[mountId]})">×</button>
-            </div>
-            <div class="size-inputs">
-                <div class="input-group">
-                    <input type="number" class="apertureWidth" step="0.1" min="0" placeholder="Width">
-                    <select class="apertureWidthUnit">
-                        <option value="mm">mm</option>
-                        <option value="cm">cm</option>
-                        <option value="in">inches</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <input type="number" class="apertureHeight" step="0.1" min="0" placeholder="Height">
-                    <select class="apertureHeightUnit">
-                        <option value="mm">mm</option>
-                        <option value="cm">cm</option>
-                        <option value="in">inches</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    aperturesContainer.insertAdjacentHTML('beforeend', apertureHtml);
-}
 
-function removeAperture(mountId, apertureId) {
-    const mountElement = document.querySelector(`[data-mount-id="${mountId}"]`);
-    const apertureElement = mountElement.querySelector(`[data-aperture-id="${apertureId}"]`);
-    
-    if (apertureElement) {
-        apertureElement.remove();
-        
-        // Update aperture numbers
-        const apertures = mountElement.querySelectorAll('.aperture-item');
-        apertures.forEach((aperture, index) => {
-            const newId = index + 1;
-            aperture.setAttribute('data-aperture-id', newId);
-            aperture.querySelector('span').textContent = `Aperture #${newId}`;
-            
-            const removeBtn = aperture.querySelector('.remove-aperture');
-            removeBtn.onclick = () => removeAperture(mountId, newId);
-        });
-    }
-}
 
 function convertToMm(value, unit) {
     return value * UNIT_CONVERSIONS[unit];
@@ -271,21 +176,17 @@ function getMountsData() {
         const quantity = parseInt(mountItem.querySelector('.quantity').value) || 0;
         
         const apertures = [];
-        const apertureItems = mountItem.querySelectorAll('.aperture-item');
+        const apertureWidth = parseFloat(mountItem.querySelector('.apertureWidth').value) || 0;
+        const apertureWidthUnit = mountItem.querySelector('.apertureWidthUnit').value;
+        const apertureHeight = parseFloat(mountItem.querySelector('.apertureHeight').value) || 0;
+        const apertureHeightUnit = mountItem.querySelector('.apertureHeightUnit').value;
         
-        apertureItems.forEach(apertureItem => {
-            const apertureWidth = parseFloat(apertureItem.querySelector('.apertureWidth').value) || 0;
-            const apertureWidthUnit = apertureItem.querySelector('.apertureWidthUnit').value;
-            const apertureHeight = parseFloat(apertureItem.querySelector('.apertureHeight').value) || 0;
-            const apertureHeightUnit = apertureItem.querySelector('.apertureHeightUnit').value;
-            
-            if (apertureWidth > 0 && apertureHeight > 0) {
-                apertures.push({
-                    width: convertToMm(apertureWidth, apertureWidthUnit),
-                    height: convertToMm(apertureHeight, apertureHeightUnit)
-                });
-            }
-        });
+        if (apertureWidth > 0 && apertureHeight > 0) {
+            apertures.push({
+                width: convertToMm(apertureWidth, apertureWidthUnit),
+                height: convertToMm(apertureHeight, apertureHeightUnit)
+            });
+        }
         
         if (outerWidth > 0 && outerHeight > 0 && quantity > 0) {
             mounts.push({
@@ -1536,9 +1437,7 @@ function displayBreakdown(results) {
                 border-radius: 4px;
             `;
             apertureInfo.innerHTML = `
-                <strong>Apertures:</strong> ${result.mount.apertures.map(ap => 
-                    `${ap.width.toFixed(1)}×${ap.height.toFixed(1)}mm`
-                ).join(', ')}
+                <strong>Aperture:</strong> ${result.mount.apertures[0].width.toFixed(1)}×${result.mount.apertures[0].height.toFixed(1)}mm
             `;
             breakdownItem.appendChild(apertureInfo);
         }

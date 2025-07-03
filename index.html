@@ -43,7 +43,7 @@
                 <div class="form-group">
                     <label for="outerGutter">Outer Gutter:</label>
                     <div class="input-group">
-                        <input type="number" id="outerGutter" step="0.1" min="0" value="5" required>
+                        <input type="number" id="outerGutter" step="0.1" min="0" value="5" required>edge 
                         <select id="outerGutterUnit">
                             <option value="mm">mm</option>
                             <option value="cm">cm</option>
@@ -103,34 +103,25 @@
                             <input type="number" class="quantity" min="1" value="1" required>
                         </div>
                         <div class="apertures-section">
-                            <label>Apertures:</label>
-                            <div class="apertures-container">
-                                <div class="aperture-item" data-aperture-id="1">
-                                    <div class="aperture-header">
-                                        <span>Aperture #1</span>
-                                        <button type="button" class="remove-aperture" onclick="removeAperture(1, 1)">×</button>
-                                    </div>
-                                    <div class="size-inputs">
-                                        <div class="input-group">
-                                            <input type="number" class="apertureWidth" step="0.1" min="0" placeholder="Width">
-                                            <select class="apertureWidthUnit">
-                                                <option value="mm">mm</option>
-                                                <option value="cm">cm</option>
-                                                <option value="in">inches</option>
-                                            </select>
-                                        </div>
-                                        <div class="input-group">
-                                            <input type="number" class="apertureHeight" step="0.1" min="0" placeholder="Height">
-                                            <select class="apertureHeightUnit">
-                                                <option value="mm">mm</option>
-                                                <option value="cm">cm</option>
-                                                <option value="in">inches</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                            <label>Aperture (optional):</label>
+                            <div class="size-inputs">
+                                <div class="input-group">
+                                    <input type="number" class="apertureWidth" step="0.1" min="0" placeholder="Width">
+                                    <select class="apertureWidthUnit">
+                                        <option value="mm">mm</option>
+                                        <option value="cm">cm</option>
+                                        <option value="in">inches</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <input type="number" class="apertureHeight" step="0.1" min="0" placeholder="Height">
+                                    <select class="apertureHeightUnit">
+                                        <option value="mm">mm</option>
+                                        <option value="cm">cm</option>
+                                        <option value="in">inches</option>
+                                    </select>
                                 </div>
                             </div>
-                            <button type="button" class="add-aperture-btn" onclick="addAperture(1)">+ Add Aperture</button>
                         </div>
                     </div>
                 </div>
