@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mount Yield Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mount Yield Calculator</h1>
+            <p>Calculate optimal cutting layouts for picture frame mounts</p>
+        </header>
+
+        <div class="calculator-grid">
+            <!-- Sheet Configuration -->
+            <div class="card">
+                <h2>Sheet Configuration</h2>
+                <div class="form-group">
+                    <label for="sheetWidth">Sheet Width:</label>
+                    <div class="input-group">
+                        <input type="number" id="sheetWidth" step="0.1" min="0" required>
+                        <select id="sheetWidthUnit">
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sheetHeight">Sheet Height:</label>
+                    <div class="input-group">
+                        <input type="number" id="sheetHeight" step="0.1" min="0" required>
+                        <select id="sheetHeightUnit">
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="outerGutter">Outer Gutter:</label>
+                    <div class="input-group">
+                        <input type="number" id="outerGutter" step="0.1" min="0" value="5" required>edge 
+                        <select id="outerGutterUnit">
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="apertureGutter">Aperture Gutter:</label>
+                    <div class="input-group">
+                        <input type="number" id="apertureGutter" step="0.1" min="0" value="2" required>
+                        <select id="apertureGutterUnit">
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sheetPrice">Sheet Price (£):</label>
+                    <input type="number" id="sheetPrice" step="0.01" min="0" value="0">
+                </div>
+            </div>
+
+            <!-- Mount Configuration -->
+            <div class="card">
+                <h2>Mount Configuration</h2>
+                <div id="mountsContainer">
+                    <div class="mount-item" data-mount-id="1">
+                        <div class="mount-header">
+                            <h3>Mount #1</h3>
+                            <button type="button" class="remove-mount" onclick="removeMount(1)">×</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Outer Size:</label>
+                            <div class="size-inputs">
+                                <div class="input-group">
+                                    <input type="number" class="outerWidth" step="0.1" min="0" placeholder="Width" required>
+                                    <select class="outerWidthUnit">
+                                        <option value="mm">mm</option>
+                                        <option value="cm">cm</option>
+                                        <option value="in">inches</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <input type="number" class="outerHeight" step="0.1" min="0" placeholder="Height" required>
+                                    <select class="outerHeightUnit">
+                                        <option value="mm">mm</option>
+                                        <option value="cm">cm</option>
+                                        <option value="in">inches</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity:</label>
+                            <input type="number" class="quantity" min="1" value="1" required>
+                        </div>
+                        <div class="apertures-section">
+                            <label>Apertures:</label>
+                            <div class="apertures-container">
+                                <div class="aperture-item" data-aperture-id="1">
+                                    <div class="aperture-header">
+                                        <span>Aperture #1</span>
+                                        <button type="button" class="remove-aperture" onclick="removeAperture(1, 1)">×</button>
+                                    </div>
+                                    <div class="size-inputs">
+                                        <div class="input-group">
+                                            <input type="number" class="apertureWidth" step="0.1" min="0" placeholder="Width">
+                                            <select class="apertureWidthUnit">
+                                                <option value="mm">mm</option>
+                                                <option value="cm">cm</option>
+                                                <option value="in">inches</option>
+                                            </select>
+                                        </div>
+                                        <div class="input-group">
+                                            <input type="number" class="apertureHeight" step="0.1" min="0" placeholder="Height">
+                                            <select class="apertureHeightUnit">
+                                                <option value="mm">mm</option>
+                                                <option value="cm">cm</option>
+                                                <option value="in">inches</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="add-aperture-btn" onclick="addAperture(1)">+ Add Aperture</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="addMountBtn" class="add-mount-btn">+ Add Mount</button>
+            </div>
+        </div>
+
+        <!-- Calculate Button -->
+        <div class="calculate-section">
+            <button type="button" id="calculateBtn" class="calculate-btn">Calculate Yield</button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="results-section" style="display: none;">
+            <div class="card">
+                <h2>Results</h2>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <h3>Total Sheets Required</h3>
+                        <div class="result-value" id="totalSheets">-</div>
+                    </div>
+                    <div class="result-item">
+                        <h3>Total Cost</h3>
+                        <div class="result-value" id="totalCost">-</div>
+                    </div>
+                    <div class="result-item">
+                        <h3>Material Efficiency</h3>
+                        <div class="result-value" id="efficiency">-</div>
+                    </div>
+                </div>
+                
+                <div class="layout-section">
+                    <h3>Optimal Layout</h3>
+                    <div id="layoutCanvas" class="layout-canvas"></div>
+                </div>
+
+                <div class="details-section">
+                    <h3>Detailed Breakdown</h3>
+                    <div id="breakdown" class="breakdown-list"></div>
+                </div>
+                
+                <div class="packing-analysis-section">
+                    <h3>Packing Analysis</h3>
+                    <div id="packingAnalysis" class="packing-analysis"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
