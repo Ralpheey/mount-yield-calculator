@@ -835,7 +835,7 @@ function displayLayout(results, sheet, nestingAnalysis = []) {
         max-width: 400px;
     `;
     summaryDiv.innerHTML = `
-        <div><strong>Layout Overview:</strong> ${totalMountsShown} parent mounts per sheet (centered)</div>
+        <div><strong>Layout Overview:</strong> ${totalMountsShown} parent mounts per sheet (starting from gutter position)</div>
         <div>🟨 Diagonal pattern = ${sheet.outerGutter.toFixed(1)}mm safety gutter around sheet edges</div>
         <div>🔵 Blue border = Available cutting area (${(sheet.width - 2*sheet.outerGutter).toFixed(0)}×${(sheet.height - 2*sheet.outerGutter).toFixed(0)}mm)</div>
         <div>↻ = Rotated for better yield | ◐ = Mixed orientations for optimal packing</div>
@@ -874,13 +874,9 @@ function drawSingleOrientationLayout(result, mountColor, scale, gutter, availabl
     const mountsPerColumn = Math.floor(availableHeightMm / mountHeightMm);
     const totalMountsPerSheet = mountsPerRow * mountsPerColumn;
     
-    // Calculate used space and centering offsets
-    const usedWidthMm = mountsPerRow * mountWidthMm;
-    const usedHeightMm = mountsPerColumn * mountHeightMm;
-    const offsetXMm = Math.max(0, (availableWidthMm - usedWidthMm) / 2);
-    const offsetYMm = Math.max(0, (availableHeightMm - usedHeightMm) / 2);
-    const offsetX = offsetXMm * scale;
-    const offsetY = offsetYMm * scale;
+    // Mounts start from gutter position (no centering)
+    const offsetX = 0;
+    const offsetY = 0;
     
     let mountsDrawn = 0;
     
@@ -919,31 +915,21 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
     let currentY = gutter;
     
     if (mixedDetails.strategy === 'alternating-rows') {
-        // Draw alternating rows properly - CENTERED
-        
-        // Calculate approximate total used space for centering
-        const normalRows = Math.ceil(mixedDetails.normalCount / Math.floor(availableWidthMm / normalWidthMm));
-        const rotatedRows = Math.ceil(mixedDetails.rotatedCount / Math.floor(availableWidthMm / rotatedWidthMm));
-        const totalUsedHeightMm = (normalRows * normalHeightMm) + (rotatedRows * rotatedHeightMm);
-        const offsetYMm = Math.max(0, (availableHeightMm - Math.min(totalUsedHeightMm, availableHeightMm)) / 2);
-        const offsetY = offsetYMm * scale;
+        // Draw alternating rows starting from gutter position
         
         let normalRemaining = mixedDetails.normalCount;
         let rotatedRemaining = mixedDetails.rotatedCount;
         let useNormalRow = true;
-        currentY = gutter + offsetY;
+        currentY = gutter;
         
         while (currentY < gutter + (availableHeightMm * scale) && (normalRemaining > 0 || rotatedRemaining > 0)) {
             if (useNormalRow && normalRemaining > 0) {
                 // Draw a complete row of normal orientation
                 const mountsInRow = Math.floor(availableWidthMm / normalWidthMm);
                 const mountsToShow = Math.min(mountsInRow, normalRemaining);
-                const usedWidthMm = mountsToShow * normalWidthMm;
-                const offsetXMm = Math.max(0, (availableWidthMm - usedWidthMm) / 2);
-                const offsetX = offsetXMm * scale;
                 
                 for (let col = 0; col < mountsToShow; col++) {
-                    const x = gutter + offsetX + (col * normalWidth);
+                    const x = gutter + (col * normalWidth);
                     drawMount(canvas, x, currentY, normalWidth, normalHeight, mountColor, mount, false, scale, nestingAnalysis);
                     mountsDrawn++;
                     normalRemaining--;
@@ -953,12 +939,9 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
                 // Draw a complete row of rotated orientation
                 const mountsInRow = Math.floor(availableWidthMm / rotatedWidthMm);
                 const mountsToShow = Math.min(mountsInRow, rotatedRemaining);
-                const usedWidthMm = mountsToShow * rotatedWidthMm;
-                const offsetXMm = Math.max(0, (availableWidthMm - usedWidthMm) / 2);
-                const offsetX = offsetXMm * scale;
                 
                 for (let col = 0; col < mountsToShow; col++) {
-                    const x = gutter + offsetX + (col * rotatedWidth);
+                    const x = gutter + (col * rotatedWidth);
                     drawMount(canvas, x, currentY, rotatedWidth, rotatedHeight, mountColor, mount, true, scale, nestingAnalysis);
                     mountsDrawn++;
                     rotatedRemaining--;
@@ -969,20 +952,9 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
             useNormalRow = !useNormalRow;
         }
     } else if (mixedDetails.strategy === 'column-mixed-rotated-first') {
-        // Draw rotated columns first, then normal columns - CENTERED
+        // Draw rotated columns first, then normal columns starting from gutter
         
-        // Calculate total used space for centering
-        const totalUsedWidthMm = (mixedDetails.rotatedColumns * rotatedWidthMm) + (mixedDetails.normalColumns * normalWidthMm);
-        const rotatedUsedHeightMm = Math.floor(availableHeightMm / rotatedHeightMm) * rotatedHeightMm;
-        const normalUsedHeightMm = Math.floor(availableHeightMm / normalHeightMm) * normalHeightMm;
-        const maxUsedHeightMm = Math.max(rotatedUsedHeightMm, normalUsedHeightMm);
-        
-        const offsetXMm = Math.max(0, (availableWidthMm - totalUsedWidthMm) / 2);
-        const offsetYMm = Math.max(0, (availableHeightMm - maxUsedHeightMm) / 2);
-        const offsetX = offsetXMm * scale;
-        const offsetY = offsetYMm * scale;
-        
-        currentX = gutter + offsetX;
+        currentX = gutter;
         
         // Draw rotated columns
         if (mixedDetails.rotatedColumns && mixedDetails.rotatedColumns > 0) {
@@ -990,7 +962,7 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
                 const mountsPerColumn = Math.floor(availableHeightMm / rotatedHeightMm);
                 for (let row = 0; row < mountsPerColumn; row++) {
                     const x = currentX;
-                    const y = gutter + offsetY + (row * rotatedHeight);
+                    const y = gutter + (row * rotatedHeight);
                     drawMount(canvas, x, y, rotatedWidth, rotatedHeight, mountColor, mount, true, scale, nestingAnalysis);
                     mountsDrawn++;
                 }
@@ -1004,7 +976,7 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
                 const mountsPerColumn = Math.floor(availableHeightMm / normalHeightMm);
                 for (let row = 0; row < mountsPerColumn; row++) {
                     const x = currentX;
-                    const y = gutter + offsetY + (row * normalHeight);
+                    const y = gutter + (row * normalHeight);
                     drawMount(canvas, x, y, normalWidth, normalHeight, mountColor, mount, false, scale, nestingAnalysis);
                     mountsDrawn++;
                 }
@@ -1012,20 +984,9 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
             }
         }
     } else if (mixedDetails.strategy === 'column-mixed-normal-first') {
-        // Draw normal columns first, then rotated columns - CENTERED
+        // Draw normal columns first, then rotated columns starting from gutter
         
-        // Calculate total used space for centering
-        const totalUsedWidthMm = (mixedDetails.normalColumns * normalWidthMm) + (mixedDetails.rotatedColumns * rotatedWidthMm);
-        const normalUsedHeightMm = Math.floor(availableHeightMm / normalHeightMm) * normalHeightMm;
-        const rotatedUsedHeightMm = Math.floor(availableHeightMm / rotatedHeightMm) * rotatedHeightMm;
-        const maxUsedHeightMm = Math.max(normalUsedHeightMm, rotatedUsedHeightMm);
-        
-        const offsetXMm = Math.max(0, (availableWidthMm - totalUsedWidthMm) / 2);
-        const offsetYMm = Math.max(0, (availableHeightMm - maxUsedHeightMm) / 2);
-        const offsetX = offsetXMm * scale;
-        const offsetY = offsetYMm * scale;
-        
-        currentX = gutter + offsetX;
+        currentX = gutter;
         
         // Draw normal columns
         if (mixedDetails.normalColumns && mixedDetails.normalColumns > 0) {
@@ -1033,7 +994,7 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
                 const mountsPerColumn = Math.floor(availableHeightMm / normalHeightMm);
                 for (let row = 0; row < mountsPerColumn; row++) {
                     const x = currentX;
-                    const y = gutter + offsetY + (row * normalHeight);
+                    const y = gutter + (row * normalHeight);
                     drawMount(canvas, x, y, normalWidth, normalHeight, mountColor, mount, false, scale, nestingAnalysis);
                     mountsDrawn++;
                 }
@@ -1047,7 +1008,7 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
                 const mountsPerColumn = Math.floor(availableHeightMm / rotatedHeightMm);
                 for (let row = 0; row < mountsPerColumn; row++) {
                     const x = currentX;
-                    const y = gutter + offsetY + (row * rotatedHeight);
+                    const y = gutter + (row * rotatedHeight);
                     drawMount(canvas, x, y, rotatedWidth, rotatedHeight, mountColor, mount, true, scale, nestingAnalysis);
                     mountsDrawn++;
                 }
@@ -1063,26 +1024,22 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
         const primaryHeight = primaryIsNormal ? normalHeight : rotatedHeight;
         const primaryCount = primaryIsNormal ? mixedDetails.normalCount : mixedDetails.rotatedCount;
         
-        // Calculate grid for primary orientation with centering
+        // Calculate grid for primary orientation starting from gutter
         const primaryPerRow = Math.floor(availableWidthMm / primaryWidthMm);
         const primaryPerColumn = Math.floor(availableHeightMm / primaryHeightMm);
         const actualPrimaryCount = Math.min(primaryCount, primaryPerRow * primaryPerColumn);
         const primaryRows = Math.ceil(actualPrimaryCount / primaryPerRow);
         
-        // Calculate used space and centering for primary grid
+        // Calculate used space for primary grid
         const usedWidthMm = primaryPerRow * primaryWidthMm;
         const usedHeightMm = primaryRows * primaryHeightMm;
-        const primaryOffsetXMm = Math.max(0, (availableWidthMm - usedWidthMm) / 2);
-        const primaryOffsetYMm = Math.max(0, (availableHeightMm - usedHeightMm) / 2);
-        const primaryOffsetX = primaryOffsetXMm * scale;
-        const primaryOffsetY = primaryOffsetYMm * scale;
         
-        // Draw primary orientation mounts in a centered grid
+        // Draw primary orientation mounts starting from gutter
         for (let i = 0; i < actualPrimaryCount; i++) {
             const row = Math.floor(i / primaryPerRow);
             const col = i % primaryPerRow;
-            const x = gutter + primaryOffsetX + (col * primaryWidth);
-            const y = gutter + primaryOffsetY + (row * primaryHeight);
+            const x = gutter + (col * primaryWidth);
+            const y = gutter + (row * primaryHeight);
             drawMount(canvas, x, y, primaryWidth, primaryHeight, mountColor, mount, !primaryIsNormal, scale, nestingAnalysis);
             mountsDrawn++;
         }
@@ -1100,18 +1057,15 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
         
         let remainingSecondary = secondaryCount;
         
-        // Fill remaining width (vertical strip) - centered
+        // Fill remaining width (vertical strip) starting from gutter
         if (remainingWidthMm >= secondaryWidthMm && remainingSecondary > 0) {
             const secondaryPerColumn = Math.floor(availableHeightMm / secondaryHeightMm);
             const secondaryColumns = Math.floor(remainingWidthMm / secondaryWidthMm);
-            const secondaryUsedHeightMm = secondaryPerColumn * secondaryHeightMm;
-            const secondaryOffsetYMm = Math.max(0, (availableHeightMm - secondaryUsedHeightMm) / 2);
-            const secondaryOffsetY = secondaryOffsetYMm * scale;
             
             for (let col = 0; col < secondaryColumns && remainingSecondary > 0; col++) {
                 for (let row = 0; row < secondaryPerColumn && remainingSecondary > 0; row++) {
-                    const x = gutter + primaryOffsetX + usedWidthMm * scale + (col * secondaryWidth);
-                    const y = gutter + secondaryOffsetY + (row * secondaryHeight);
+                    const x = gutter + usedWidthMm * scale + (col * secondaryWidth);
+                    const y = gutter + (row * secondaryHeight);
                     drawMount(canvas, x, y, secondaryWidth, secondaryHeight, mountColor, mount, primaryIsNormal, scale, nestingAnalysis);
                     mountsDrawn++;
                     remainingSecondary--;
@@ -1119,17 +1073,14 @@ function drawMixedLayout(result, mountColor, scale, gutter, availableWidthMm, av
             }
         }
         
-        // Fill remaining height (horizontal strip) - centered
+        // Fill remaining height (horizontal strip) starting from gutter
         if (remainingHeightMm >= secondaryHeightMm && remainingSecondary > 0) {
             const secondaryPerRow = Math.floor(usedWidthMm / secondaryWidthMm);
-            const secondaryUsedWidthMm = secondaryPerRow * secondaryWidthMm;
-            const secondaryOffsetXMm = Math.max(0, (usedWidthMm - secondaryUsedWidthMm) / 2);
-            const secondaryOffsetX = secondaryOffsetXMm * scale;
             
             for (let row = 0; row < Math.floor(remainingHeightMm / secondaryHeightMm) && remainingSecondary > 0; row++) {
                 for (let col = 0; col < secondaryPerRow && remainingSecondary > 0; col++) {
-                    const x = gutter + primaryOffsetX + secondaryOffsetX + (col * secondaryWidth);
-                    const y = gutter + primaryOffsetY + usedHeightMm * scale + (row * secondaryHeight);
+                    const x = gutter + (col * secondaryWidth);
+                    const y = gutter + usedHeightMm * scale + (row * secondaryHeight);
                     drawMount(canvas, x, y, secondaryWidth, secondaryHeight, mountColor, mount, primaryIsNormal, scale, nestingAnalysis);
                     mountsDrawn++;
                     remainingSecondary--;
